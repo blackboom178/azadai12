@@ -1,0 +1,1065 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Azad AI - NEET Preparation</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #10b981;
+            --primary-glow: rgba(16, 185, 129, 0.8);
+            --background-start: #0a0a0a;
+            --background-end: #1c1c1c;
+            --card-bg: rgba(23, 31, 49, 0.8);
+            --border-color: rgba(255, 255, 255, 0.1);
+        }
+        html {
+            scroll-behavior: smooth;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            overflow: hidden;
+            background: linear-gradient(135deg, var(--background-start), var(--background-end));
+            color: #e5e7eb; 
+        }
+        #bg-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            opacity: 0.6;
+        }
+        .chat-container::-webkit-scrollbar, .scroll-container::-webkit-scrollbar {
+            width: 6px;
+        }
+        .chat-container::-webkit-scrollbar-track, .scroll-container::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+        .chat-container::-webkit-scrollbar-thumb, .scroll-container::-webkit-scrollbar-thumb {
+            background: rgba(16, 185, 129, 0.6); 
+            border-radius: 10px;
+        }
+        .professional-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--border-color);
+            box-shadow: 0 15px 40px 0 rgba(0, 0, 0, 0.3);
+        }
+        .btn {
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            transform: scale(1);
+        }
+        .btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 30px 5px rgba(255, 255, 255, 0.2);
+        }
+        .btn-primary {
+             background-color: #ffffff;
+             color: #000000;
+             border: 1px solid #ffffff;
+        }
+        .btn-secondary {
+            background-color: transparent;
+            color: #ffffff;
+            border: 1px solid #ffffff;
+        }
+        .btn-secondary:hover {
+            background-color: #ffffff;
+            color: #000000;
+        }
+        .highlight-text {
+            color: var(--primary-color);
+            text-shadow: 0 0 20px var(--primary-glow);
+        }
+        .animated-item {
+            opacity: 0;
+            transform: translateY(20px);
+            animation: slide-in 0.5s forwards ease-out;
+        }
+        @keyframes slide-in {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .page-transition {
+            transition: opacity 0.7s ease-in-out, transform 0.7s ease-in-out;
+        }
+        .page-hidden {
+            opacity: 0;
+            transform: scale(0.95);
+            pointer-events: none;
+        }
+        .nav-link {
+            position: relative;
+            transition: color 0.3s;
+            cursor: pointer;
+        }
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 2px;
+            bottom: -5px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: var(--primary-color);
+            transition: width 0.3s;
+        }
+        .nav-link:hover {
+            color: var(--primary-color);
+        }
+        .nav-link:hover::after {
+            width: 100%;
+        }
+        .info-section {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            10%, 30%, 50%, 70%, 90% { transform: translateX(-8px); }
+            20%, 40%, 60%, 80% { transform: translateX(8px); }
+        }
+        .shake {
+            animation: shake 0.5s ease-in-out;
+        }
+        .tool-content { display: none; }
+        .tool-content.active { display: block; }
+        .flashcard-container { perspective: 1000px; }
+        .flashcard {
+            width: 100%;
+            height: 150px;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.6s;
+            cursor: pointer;
+        }
+        .flashcard.is-flipped { transform: rotateY(180deg); }
+        .flashcard-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+            border-radius: 0.75rem;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: rgba(31, 41, 55, 0.7);
+        }
+        .flashcard-back { transform: rotateY(180deg); }
+        .quiz-option {
+            border: 2px solid #4b5563;
+            transition: all 0.2s;
+        }
+        .quiz-option:hover {
+            background-color: #374151;
+            border-color: var(--primary-color);
+        }
+        .quiz-option.selected {
+             background-color: #115e59;
+             border-color: var(--primary-color);
+        }
+        .quiz-option.correct {
+            background-color: #059669;
+            border-color: var(--primary-color);
+            color: white;
+        }
+        .quiz-option.incorrect {
+            background-color: #b91c1c;
+            border-color: #ef4444;
+            color: white;
+        }
+        .mobile-menu {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 0.75rem;
+            padding: 1rem;
+            margin-top: 1rem;
+            width: 200px;
+        }
+        .faq-item .faq-question {
+            cursor: pointer;
+            padding: 1rem;
+            background-color: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            transition: background-color 0.3s;
+        }
+        .faq-item .faq-question:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+        .faq-item .faq-answer {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.5s ease-in-out, padding 0.5s ease-in-out;
+            padding: 0 1rem;
+        }
+        .faq-item.active .faq-answer {
+            max-height: 200px;
+            padding: 1rem 1rem;
+        }
+        .faq-item.active .faq-arrow {
+            transform: rotate(90deg);
+        }
+        .faq-arrow {
+            transition: transform 0.3s;
+        }
+        .input-group {
+            position: relative;
+        }
+        .input-icon {
+            position: absolute;
+            left: 1.25rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #6b7280;
+        }
+        .input-field {
+            padding-left: 3rem;
+        }
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 0 20px var(--primary-glow); }
+            50% { box-shadow: 0 0 35px var(--primary-glow); }
+        }
+        .login-avatar-glow {
+            animation: pulse-glow 3s infinite ease-in-out;
+        }
+        .login-card-border {
+            border-top: 4px solid;
+            border-image: linear-gradient(to right, transparent, var(--primary-color), transparent) 1;
+        }
+        .tool-card {
+            background: rgba(31, 41, 55, 0.5);
+            border: 1px solid var(--border-color);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        .tool-card:hover {
+            transform: translateY(-10px);
+            background: rgba(31, 41, 55, 0.8);
+            box-shadow: 0 0 40px var(--primary-glow);
+        }
+        .tool-icon-wrapper {
+            height: 4rem;
+            width: 4rem;
+            background: rgba(16, 185, 129, 0.1);
+            border-radius: 9999px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1rem auto;
+            border: 1px solid var(--primary-color);
+        }
+    </style>
+</head>
+<body class="text-slate-300">
+    <canvas id="bg-canvas"></canvas>
+
+    <div id="home-section" class="relative flex flex-col h-screen w-screen items-center justify-center p-4 md:p-6 text-center page-transition">
+        
+        <header class="absolute top-0 left-0 w-full p-6 z-20">
+            <nav class="container mx-auto flex justify-between items-center">
+                <a href="#" id="home-link" class="text-2xl font-bold text-white transition-transform hover:scale-105">Azad <span class="text-teal-500">AI</span></a>
+                <div class="hidden md:flex items-center space-x-8">
+                    <a id="how-it-works-link" class="nav-link">How It Works</a>
+                    <a id="tools-link" class="nav-link">Tools</a>
+                    <a id="faq-link" class="nav-link">FAQ</a>
+                    <a href="#" id="get-started-nav-btn" class="btn btn-primary rounded-lg px-5 py-2 text-sm font-semibold">Get Started</a>
+                </div>
+                <div class="md:hidden relative">
+                    <button id="mobile-menu-btn" class="text-white">
+                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
+                    </button>
+                    <div id="mobile-menu" class="hidden mobile-menu">
+                        <a id="mobile-how-it-works-link" class="block py-2 text-white hover:text-teal-400">How It Works</a>
+                        <a id="mobile-tools-link" class="block py-2 text-white hover:text-teal-400">Tools</a>
+                        <a id="mobile-faq-link" class="block py-2 text-white hover:text-teal-400">FAQ</a>
+                        <a href="#" id="mobile-get-started-btn" class="block mt-2 text-center btn btn-primary rounded-lg px-5 py-2 text-sm font-semibold">Get Started</a>
+                    </div>
+                </div>
+            </nav>
+        </header>
+
+        <div id="main-home-content" class="z-10 page-transition">
+            <h1 class="text-5xl md:text-7xl font-extrabold text-white mb-4 animated-item" style="animation-delay: 0.1s;">Unlock Your</h1>
+            <h1 class="text-5xl md:text-7xl font-extrabold highlight-text mb-6 animated-item" style="animation-delay: 0.2s;">Full Potential</h1>
+            <p class="text-slate-400 mb-8 max-w-xl mx-auto text-lg animated-item" style="animation-delay: 0.3s;">
+                Azad AI is your personal guide to mastering NEET. We transform your ambitions into actionable, intelligent roadmaps for success.
+            </p>
+            <button id="start-btn" class="btn btn-primary rounded-lg px-8 py-3 font-bold text-lg focus:outline-none focus:ring-2 focus:ring-teal-400 animated-item" style="animation-delay: 0.4s;">
+                Start
+            </button>
+        </div>
+        
+        <!-- INFO SECTIONS -->
+        <div id="how-it-works-section" class="info-section page-transition page-hidden hidden">
+             <div class="professional-card w-full max-w-3xl p-8 rounded-2xl text-left animated-item">
+                <div class="flex justify-between items-center mb-8">
+                    <h2 class="text-3xl font-bold text-white">How It Works</h2>
+                    <button class="back-btn p-2 rounded-full text-slate-400 hover:text-white hover:bg-white/10 transition-colors">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                </div>
+                <div class="space-y-6">
+                    <div class="flex items-start gap-4">
+                        <div class="bg-teal-900/50 p-3 rounded-full"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-teal-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.546-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg></div>
+                        <div>
+                            <h4 class="font-semibold text-white">Ask Anything, Anytime</h4>
+                            <p class="text-slate-400 text-sm">Our AI mentor, Azad Sir, is available 24/7. Ask complex questions, get step-by-step solutions, or request study plans for any topic.</p>
+                        </div>
+                    </div>
+                     <div class="flex items-start gap-4">
+                        <div class="bg-teal-900/50 p-3 rounded-full"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-teal-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" /></svg></div>
+                        <div>
+                            <h4 class="font-semibold text-white">Visual Problem Solving</h4>
+                            <p class="text-slate-400 text-sm">Stuck on a question from a textbook? Use the camera feature to snap a picture. Azad AI analyzes the image and provides a detailed solution instantly.</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start gap-4">
+                        <div class="bg-teal-900/50 p-3 rounded-full"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-teal-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" /></svg></div>
+                        <div>
+                            <h4 class="font-semibold text-white">Interactive Learning Tools</h4>
+                            <p class="text-slate-400 text-sm">Go beyond chat with AI-powered quizzes, flashcard generation, and a "Question of the Day" to actively test your knowledge and accelerate your learning.</p>
+                        </div>
+                    </div>
+                </div>
+             </div>
+        </div>
+
+        <div id="faq-section" class="info-section page-transition page-hidden hidden">
+             <div class="professional-card w-full max-w-3xl p-8 rounded-2xl text-left animated-item">
+                 <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-3xl font-bold text-white">Frequently Asked Questions</h2>
+                    <button class="back-btn p-2 rounded-full text-slate-400 hover:text-white hover:bg-white/10 transition-colors">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                </div>
+                <div id="faq-container" class="space-y-4">
+                </div>
+             </div>
+        </div>
+
+        <div id="tools-section" class="info-section page-transition page-hidden hidden">
+            <div class="professional-card w-full max-w-5xl h-[95vh] flex flex-col p-6 md:p-8 rounded-2xl text-left animated-item">
+                <div class="flex justify-between items-center mb-6 flex-shrink-0">
+                    <h2 id="tools-main-title" class="text-3xl font-bold text-white">Preparation Tools</h2>
+                    <button class="back-btn p-2 rounded-full text-slate-400 hover:text-white hover:bg-white/10 transition-colors">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                </div>
+                 <div class="flex-grow overflow-y-auto scroll-container pr-2">
+                    <div id="tools-dashboard" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                        <div class="tool-card animated-item" style="animation-delay: 100ms;" data-tool="quiz">
+                            <div class="tool-icon-wrapper"><svg class="w-8 h-8 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg></div>
+                            <h3 class="text-xl font-bold text-white mb-2">Mock Quiz</h3>
+                            <p class="text-slate-400 text-sm mb-4">Generate custom quizzes on any topic to test your knowledge.</p>
+                            <button class="btn btn-secondary rounded-lg px-4 py-2 text-sm font-semibold">Start Quiz</button>
+                        </div>
+                        <div class="tool-card animated-item" style="animation-delay: 200ms;" data-tool="flashcards">
+                            <div class="tool-icon-wrapper"><svg class="w-8 h-8 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg></div>
+                            <h3 class="text-xl font-bold text-white mb-2">Flashcards</h3>
+                            <p class="text-slate-400 text-sm mb-4">Create decks of flashcards instantly for quick revision.</p>
+                            <button class="btn btn-secondary rounded-lg px-4 py-2 text-sm font-semibold">Generate</button>
+                        </div>
+                         <div class="tool-card animated-item" style="animation-delay: 300ms;" data-tool="qotd">
+                            <div class="tool-icon-wrapper"><svg class="w-8 h-8 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg></div>
+                            <h3 class="text-xl font-bold text-white mb-2">Daily Question</h3>
+                            <p class="text-slate-400 text-sm mb-4">Challenge yourself with a new high-yield question every day.</p>
+                            <button class="btn btn-secondary rounded-lg px-4 py-2 text-sm font-semibold">View Question</button>
+                        </div>
+                        <div class="tool-card animated-item" style="animation-delay: 400ms;" data-tool="mnemonic">
+                            <div class="tool-icon-wrapper"><svg class="w-8 h-8 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path></svg></div>
+                            <h3 class="text-xl font-bold text-white mb-2">Mnemonics</h3>
+                            <p class="text-slate-400 text-sm mb-4">Create memorable phrases to recall complex lists and sequences.</p>
+                            <button class="btn btn-secondary rounded-lg px-4 py-2 text-sm font-semibold">Create</button>
+                        </div>
+                    </div>
+                    <div id="tool-interface" class="hidden">
+                        <div id="quiz-tool" class="tool-content">
+                            <div class="flex justify-between items-center mb-4">
+                                 <h3 class="text-2xl font-bold text-teal-400">Mock Quiz</h3>
+                                 <button class="back-to-tools-btn btn btn-secondary rounded-lg px-4 py-2 text-sm font-semibold inline-flex items-center gap-2">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg> Back
+                                </button>
+                            </div>
+                            <div id="quiz-setup">
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <select id="quiz-subject" class="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-teal-500">
+                                        <option disabled selected>Select Subject</option><option>Physics</option><option>Chemistry</option><option>Biology</option>
+                                    </select>
+                                    <input type="text" id="quiz-topic" placeholder="Enter Chapter or Topic" class="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-teal-500">
+                                </div>
+                                <button id="generate-quiz-btn" class="mt-6 btn btn-primary rounded-lg px-6 py-2 font-bold">Generate Quiz</button>
+                            </div>
+                            <div id="quiz-container" class="hidden"></div>
+                        </div>
+                        <div id="flashcards-tool" class="tool-content">
+                            <div class="flex justify-between items-center mb-4">
+                                 <h3 class="text-2xl font-bold text-teal-400">Flashcard Generator</h3>
+                                 <button class="back-to-tools-btn btn btn-secondary rounded-lg px-4 py-2 text-sm font-semibold inline-flex items-center gap-2">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg> Back
+                                </button>
+                            </div>
+                             <div class="flex flex-col sm:flex-row gap-4">
+                                <input type="text" id="flashcard-topic" placeholder="Enter Topic (e.g., Human Heart)" class="flex-grow bg-gray-900 border border-gray-700 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-teal-500">
+                                <button id="generate-flashcards-btn" class="btn btn-primary rounded-lg px-6 py-2 font-bold">Generate</button>
+                             </div>
+                             <div id="flashcard-display" class="mt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+                        </div>
+                        <div id="qotd-tool" class="tool-content">
+                            <div class="flex justify-between items-center mb-4">
+                                 <h3 class="text-2xl font-bold text-teal-400">Question of the Day</h3>
+                                 <button class="back-to-tools-btn btn btn-secondary rounded-lg px-4 py-2 text-sm font-semibold inline-flex items-center gap-2">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg> Back
+                                </button>
+                            </div>
+                            <div id="qotd-container" class="p-4 rounded-lg bg-gray-900 border border-gray-700"></div>
+                        </div>
+                         <div id="mnemonic-tool" class="tool-content">
+                            <div class="flex justify-between items-center mb-4">
+                                 <h3 class="text-2xl font-bold text-teal-400">AI Mnemonic Generator</h3>
+                                 <button class="back-to-tools-btn btn btn-secondary rounded-lg px-4 py-2 text-sm font-semibold inline-flex items-center gap-2">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg> Back
+                                </button>
+                            </div>
+                            <p class="text-slate-400 text-sm mb-4">Enter a list of items you want to memorize, separated by commas or on new lines.</p>
+                            <textarea id="mnemonic-input" placeholder="e.g., Kingdom, Phylum, Class, Order, Family, Genus, Species" class="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-3 h-32 focus:outline-none focus:ring-2 focus:ring-teal-500"></textarea>
+                            <button id="generate-mnemonic-btn" class="mt-4 btn btn-primary rounded-lg px-6 py-2 font-bold">Generate Mnemonic</button>
+                            <div id="mnemonic-display" class="mt-6 p-4 rounded-lg bg-gray-900 border border-gray-700 hidden"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div id="login-section" class="info-section page-transition page-hidden hidden">
+            <div class="professional-card login-card-border w-full max-w-md p-8 md:p-10 rounded-2xl text-center animated-item">
+                <div class="w-20 h-20 mx-auto mb-6 rounded-full login-avatar-glow flex items-center justify-center">
+                    <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                        <path fill="#10b981" d="M48.2,-64.8C62,-51.1,72.4,-34.3,75.4,-16.4C78.4,1.4,74.1,20.4,65.3,37.3C56.5,54.2,43.3,69,27.1,75.8C10.9,82.6,-8.2,81.3,-26.1,74.5C-44.1,67.7,-60.9,55.3,-70.2,38.8C-79.5,22.3,-81.4,1.7,-77.2,-17.1C-73,-35.9,-62.7,-52.9,-48.5,-65.4C-34.3,-77.9,-16.2,-85.9,1.5,-87.3C19.2,-88.7,34.4,-78.5,48.2,-64.8Z" transform="translate(100 100)" />
+                        <text x="75" y="115" font-size="80" font-weight="bold" fill="#064e3b">AS</text>
+                     </svg>
+                </div>
+                <h2 class="text-3xl font-bold text-white mb-2">Welcome Back</h2>
+                <p class="text-slate-400 mb-8">Enter your password to begin.</p>
+                <form id="login-form">
+                    <div class="space-y-6">
+                        <div class="input-group">
+                             <svg class="w-5 h-5 input-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                             <input type="text" id="name-input" placeholder="Enter your name" class="w-full bg-gray-900 border border-gray-700 rounded-lg px-5 py-3 focus:outline-none focus:ring-2 focus:ring-teal-500 transition-all duration-300 text-slate-300 input-field" required>
+                        </div>
+                        <div class="input-group">
+                           <svg class="w-5 h-5 input-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                           <input type="password" id="password-input" placeholder="Password" class="w-full bg-gray-900 border border-gray-700 rounded-lg px-5 py-3 focus:outline-none focus:ring-2 focus:ring-teal-500 transition-all duration-300 text-slate-300 input-field" required>
+                        </div>
+                    </div>
+                    <button type="submit" class="w-full mt-8 btn btn-primary rounded-lg px-8 py-3 font-bold text-lg focus:outline-none focus:ring-2 focus:ring-teal-400">
+                        Enter Mentorship
+                    </button>
+                </form>
+            </div>
+        </div>
+
+    </div>
+
+    <div id="chat-section" class="relative flex-col h-screen w-screen items-center justify-center p-4 md:p-6 page-transition page-hidden hidden">
+        <div class="w-full max-w-4xl h-[95vh] flex flex-col rounded-2xl professional-card shadow-2xl">
+            <div class="p-4 border-b border-gray-700/80 flex items-center space-x-4 flex-shrink-0">
+                 <div class="w-12 h-12">
+                     <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                        <path fill="#10b981" d="M48.2,-64.8C62,-51.1,72.4,-34.3,75.4,-16.4C78.4,1.4,74.1,20.4,65.3,37.3C56.5,54.2,43.3,69,27.1,75.8C10.9,82.6,-8.2,81.3,-26.1,74.5C-44.1,67.7,-60.9,55.3,-70.2,38.8C-79.5,22.3,-81.4,1.7,-77.2,-17.1C-73,-35.9,-62.7,-52.9,-48.5,-65.4C-34.3,-77.9,-16.2,-85.9,1.5,-87.3C19.2,-88.7,34.4,-78.5,48.2,-64.8Z" transform="translate(100 100)" />
+                        <text x="75" y="115" font-size="80" font-weight="bold" fill="#064e3b">AS</text>
+                     </svg>
+                 </div>
+                <div>
+                    <h1 class="text-xl font-bold text-white">Azad AI Mentor</h1>
+                    <p class="text-sm text-teal-500">Your Personal NEET Guide</p>
+                </div>
+            </div>
+            <div id="chat-container" class="flex-1 p-6 overflow-y-auto space-y-6">
+                <div class="mentor-message animated-item flex items-start space-x-3">
+                     <div class="w-10 h-10 flex-shrink-0">
+                         <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                           <path fill="#10b981" d="M48.2,-64.8C62,-51.1,72.4,-34.3,75.4,-16.4C78.4,1.4,74.1,20.4,65.3,37.3C56.5,54.2,43.3,69,27.1,75.8C10.9,82.6,-8.2,81.3,-26.1,74.5C-44.1,67.7,-60.9,55.3,-70.2,38.8C-79.5,22.3,-81.4,1.7,-77.2,-17.1C-73,-35.9,-62.7,-52.9,-48.5,-65.4C-34.3,-77.9,-16.2,-85.9,1.5,-87.3C19.2,-88.7,34.4,-78.5,48.2,-64.8Z" transform="translate(100 100)" /><text x="75" y="115" font-size="80" font-weight="bold" fill="#064e3b">AS</text>
+                         </svg>
+                     </div>
+                    <div class="bg-gray-800 p-4 rounded-xl rounded-tl-none max-w-lg">
+                        <p class="font-semibold text-teal-400 mb-1">Azad Sir</p>
+                        <p>Namaste, future doctor! Main hoon Azad Sir. Chalo, NEET ki taiyaari shuru karein! Koi bhi sawaal ho, bejhijhak puchho.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="p-4 border-t border-gray-700/80 flex-shrink-0">
+                <form id="chat-form" class="flex items-center space-x-3">
+                    <input type="text" id="user-input" placeholder="Ask a question or describe a topic..." class="flex-1 bg-gray-900 border border-gray-700 rounded-lg px-5 py-3 focus:outline-none focus:ring-2 focus:ring-teal-500 transition-all duration-300 text-slate-300">
+                    <button id="camera-btn" type="button" title="Ask with Camera" class="btn bg-gray-700 text-white rounded-lg p-3 hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-400">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                    </button>
+                    <button id="study-plan-btn" type="button" title="Generate Study Plan" class="btn bg-gray-700 text-white rounded-lg p-3 hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-teal-400">
+                       <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" /></svg>
+                    </button>
+                    <button id="submit-btn" type="submit" class="btn bg-teal-500 text-white rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-teal-400">
+                       <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" /></svg>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div id="camera-modal" class="fixed inset-0 bg-black bg-opacity-80 flex-col items-center justify-center p-4 z-50 hidden">
+        <video id="camera-feed" class="rounded-lg max-w-full max-h-[70vh] w-auto h-auto mb-4" autoplay playsinline></video>
+        <canvas id="camera-canvas" class="hidden"></canvas>
+        <div class="flex space-x-4">
+            <button id="capture-btn" class="btn btn-primary rounded-lg px-6 py-3 font-bold text-lg">Capture Question</button>
+            <button id="close-camera-btn" class="bg-slate-600 text-white rounded-lg px-6 py-3 font-bold text-lg hover:bg-slate-700 transition-all duration-300">Close</button>
+        </div>
+    </div>
+
+    <div id="loading-modal" class="fixed inset-0 bg-black bg-opacity-80 hidden items-center justify-center p-4 z-[100]">
+        <div class="text-center text-white">
+            <div class="w-16 h-16 border-4 border-dashed rounded-full animate-spin border-teal-500 mx-auto mb-4"></div>
+            <p class="text-lg font-semibold">Azad AI is thinking...</p>
+        </div>
+    </div>
+
+    <script>
+        // --- 3D Background Setup ---
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('bg-canvas'), alpha: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        const hologramGroup = new THREE.Group();
+        scene.add(hologramGroup);
+        const gridColor = new THREE.Color(0x10b981);
+        const globeColor = new THREE.Color(0xfbbf24); 
+        const ringsColor = new THREE.Color(0xf97316); 
+
+        const globeGeometry = new THREE.SphereGeometry(2.2, 32, 32); 
+        const globeMaterial = new THREE.MeshBasicMaterial({ color: globeColor, wireframe: true, transparent: true, opacity: 0.6 });
+        const globe = new THREE.Mesh(globeGeometry, globeMaterial);
+        hologramGroup.add(globe);
+
+        const points = [];
+        for ( let i = 0; i < 16; i ++ ) {
+	        points.push( new THREE.Vector2( Math.sin( i * 0.2 ) * 0.5 + 2.0, ( i - 7.5 ) * 0.3 ) );
+        }
+        const ringsGeometry = new THREE.LatheGeometry( points, 32 );
+        const ringsMaterial = new THREE.MeshBasicMaterial( { color: ringsColor, wireframe: true, side: THREE.DoubleSide, transparent: true, opacity: 0.4 } );
+        const rings = new THREE.Mesh( ringsGeometry, ringsMaterial );
+        hologramGroup.add( rings );
+        
+        const grid = new THREE.GridHelper(50, 50, gridColor, 0x555555);
+        grid.material.opacity = 0.15;
+        grid.material.transparent = true;
+        grid.position.y = -5;
+        scene.add(grid);
+        camera.position.z = 5;
+        let mouseX = 0, mouseY = 0;
+        let targetX = 0, targetY = 0;
+        const windowHalfX = window.innerWidth / 2;
+        const windowHalfY = window.innerHeight / 2;
+        document.addEventListener('mousemove', onDocumentMouseMove);
+        function onDocumentMouseMove(event) {
+            mouseX = (event.clientX - windowHalfX);
+            mouseY = (event.clientY - windowHalfY);
+        }
+        function animate() {
+            requestAnimationFrame(animate);
+            targetX = mouseX * 0.002;
+            targetY = mouseY * 0.002;
+            
+            hologramGroup.rotation.y += 0.05 * (targetX - hologramGroup.rotation.y);
+            hologramGroup.rotation.x += 0.05 * (targetY - hologramGroup.rotation.x);
+            
+            globe.rotation.y += 0.0005; 
+            rings.rotation.y -= 0.001;
+
+            if (Math.random() > 0.99) {
+                globeMaterial.opacity = 0.3;
+                ringsMaterial.opacity = 0.2;
+            } else {
+                globeMaterial.opacity += (0.6 - globeMaterial.opacity) * 0.1;
+                ringsMaterial.opacity += (0.4 - ringsMaterial.opacity) * 0.1;
+            }
+            renderer.render(scene, camera);
+        }
+        animate();
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        });
+
+        // --- Core Page & UI Logic ---
+        const homeSection = document.getElementById('home-section');
+        const chatSection = document.getElementById('chat-section');
+        const mainHomeContent = document.getElementById('main-home-content');
+        const infoSections = {
+            howItWorks: document.getElementById('how-it-works-section'),
+            faq: document.getElementById('faq-section'),
+            tools: document.getElementById('tools-section'),
+            login: document.getElementById('login-section')
+        };
+        const apiKey = "";
+        
+        function showCustomAlert(message) {
+            const modal = document.createElement('div');
+            modal.innerHTML = `<div style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 1000;"><div class="professional-card p-6 text-center animated-item"><p class="mb-4">${message}</p><button onclick="this.parentElement.parentElement.remove()" class="btn btn-primary px-4 py-2">OK</button></div></div>`;
+            document.body.appendChild(modal);
+        }
+
+        function showSection(sectionToShow) {
+            Object.values(infoSections).forEach(s => s.classList.add('page-hidden', 'hidden'));
+            mainHomeContent.classList.add('page-hidden');
+            
+            if (sectionToShow) {
+                 sectionToShow.classList.remove('hidden');
+                 setTimeout(() => sectionToShow.classList.remove('page-hidden'), 50);
+            } else {
+                 mainHomeContent.classList.remove('page-hidden');
+            }
+        }
+        
+        // --- Event Listeners ---
+        document.getElementById('how-it-works-link').addEventListener('click', (e) => { e.preventDefault(); showSection(infoSections.howItWorks); });
+        document.getElementById('faq-link').addEventListener('click', (e) => { e.preventDefault(); showSection(infoSections.faq); });
+        document.getElementById('tools-link').addEventListener('click', (e) => { 
+            e.preventDefault(); 
+            showSection(infoSections.tools);
+        });
+        document.getElementById('home-link').addEventListener('click', (e) => { e.preventDefault(); showSection(null); });
+        document.querySelectorAll('.back-btn').forEach(btn => { btn.addEventListener('click', () => showSection(null)); });
+        
+        const showLogin = (e) => { e.preventDefault(); showSection(infoSections.login); };
+        document.getElementById('start-btn').addEventListener('click', showLogin);
+        document.getElementById('get-started-nav-btn').addEventListener('click', showLogin);
+
+        // Mobile Menu
+        const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+        const mobileMenu = document.getElementById('mobile-menu');
+        mobileMenuBtn.addEventListener('click', () => mobileMenu.classList.toggle('hidden'));
+        document.getElementById('mobile-how-it-works-link').addEventListener('click', (e) => { e.preventDefault(); showSection(infoSections.howItWorks); mobileMenu.classList.add('hidden'); });
+        document.getElementById('mobile-tools-link').addEventListener('click', (e) => { e.preventDefault(); showSection(infoSections.tools); mobileMenu.classList.add('hidden'); });
+        document.getElementById('mobile-faq-link').addEventListener('click', (e) => { e.preventDefault(); showSection(infoSections.faq); mobileMenu.classList.add('hidden'); });
+        document.getElementById('mobile-get-started-btn').addEventListener('click', (e) => { e.preventDefault(); showLogin(e); mobileMenu.classList.add('hidden'); });
+
+
+        document.getElementById('login-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const passwordInput = document.getElementById('password-input');
+            if (passwordInput.value === 'azad15') {
+                homeSection.classList.add('page-hidden');
+                setTimeout(() => {
+                    homeSection.classList.add('hidden');
+                    chatSection.classList.remove('hidden');
+                    setTimeout(() => chatSection.classList.remove('page-hidden'), 50);
+                }, 700);
+            } else {
+                showCustomAlert("Incorrect password. Please try again.");
+                passwordInput.value = '';
+                const loginCard = infoSections.login.querySelector('.professional-card');
+                loginCard.classList.add('shake');
+                setTimeout(() => loginCard.classList.remove('shake'), 500);
+            }
+        });
+
+        const chatForm = document.getElementById('chat-form');
+        const chatContainer = document.getElementById('chat-container');
+        chatForm.addEventListener('submit', e => {
+            e.preventDefault();
+            const userInput = document.getElementById('user-input');
+            const message = userInput.value.trim();
+            if (message) {
+                addMessageToChat('user', message);
+                userInput.value = '';
+                showTypingIndicator();
+                getBotResponse(message, 'general');
+            }
+        });
+
+        document.getElementById('study-plan-btn').addEventListener('click', () => {
+            const userInput = document.getElementById('user-input');
+            const message = userInput.value.trim();
+            if (!message) {
+                 showCustomAlert("Please describe the topic for the study plan first.");
+                return;
+            };
+            addMessageToChat('user', `Generate a study plan for: ${message}`);
+            userInput.value = '';
+            showTypingIndicator();
+            getBotResponse(message, 'study_plan');
+        });
+
+        const cameraModal = document.getElementById('camera-modal');
+        let cameraStream = null;
+        document.getElementById('camera-btn').addEventListener('click', async () => {
+            cameraModal.classList.remove('hidden');
+            cameraModal.classList.add('flex');
+            try {
+                cameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+                document.getElementById('camera-feed').srcObject = cameraStream;
+            } catch (err) {
+                showCustomAlert("Could not access the camera. Please ensure you have a camera and have granted permission.");
+                stopCamera();
+            }
+        });
+
+        function stopCamera() {
+            if (cameraStream) cameraStream.getTracks().forEach(track => track.stop());
+            cameraModal.classList.add('hidden');
+            cameraModal.classList.remove('flex');
+        }
+        document.getElementById('close-camera-btn').addEventListener('click', stopCamera);
+
+        document.getElementById('capture-btn').addEventListener('click', () => {
+            const cameraFeed = document.getElementById('camera-feed');
+            const cameraCanvas = document.getElementById('camera-canvas');
+            const context = cameraCanvas.getContext('2d');
+            cameraCanvas.width = cameraFeed.videoWidth;
+            cameraCanvas.height = cameraFeed.videoHeight;
+            context.drawImage(cameraFeed, 0, 0, cameraCanvas.width, cameraCanvas.height);
+            const imageDataUrl = cameraCanvas.toDataURL('image/png');
+            stopCamera();
+            addMessageToChat('user', `<img src="${imageDataUrl}" class="rounded-lg max-w-xs" alt="Captured Question">`);
+            showTypingIndicator();
+            getBotResponse(imageDataUrl, 'image_question');
+        });
+        
+        function addMessageToChat(sender, message, originalText = null) {
+            const messageId = `msg-${Date.now()}`;
+            const messageWrapper = document.createElement('div');
+            messageWrapper.className = `animated-item ${sender === 'user' ? 'user-message flex justify-end' : 'mentor-message flex items-start space-x-3'}`;
+            if (sender === 'user') {
+                messageWrapper.innerHTML = `<div class="bg-teal-600 text-white p-4 rounded-xl rounded-br-none max-w-lg">${message}</div>`;
+            } else {
+                let featureButton = (originalText !== 'analogy_response') 
+                    ? `<button class="feature-btn" onclick="getAnalogy('${messageId}')">Explain with Analogy ✨</button>` 
+                    : '';
+                messageWrapper.innerHTML = `<div class="w-10 h-10 flex-shrink-0"><svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"><path fill="#10b981" d="M48.2,-64.8C62,-51.1,72.4,-34.3,75.4,-16.4C78.4,1.4,74.1,20.4,65.3,37.3C56.5,54.2,43.3,69,27.1,75.8C10.9,82.6,-8.2,81.3,-26.1,74.5C-44.1,67.7,-60.9,55.3,-70.2,38.8C-79.5,22.3,-81.4,1.7,-77.2,-17.1C-73,-35.9,-62.7,-52.9,-48.5,-65.4C-34.3,-77.9,-16.2,-85.9,1.5,-87.3C19.2,-88.7,34.4,-78.5,48.2,-64.8Z" transform="translate(100 100)" /><text x="75" y="115" font-size="80" font-weight="bold" fill="#064e3b">AS</text></svg></div><div class="bg-gray-800 p-4 rounded-xl rounded-tl-none max-w-lg"><p class="font-semibold text-teal-400 mb-1">Azad Sir</p><p id="${messageId}">${message.replace(/\n/g, '<br>')}</p>${featureButton}</div>`;
+            }
+            chatContainer.appendChild(messageWrapper);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+        
+        window.getAnalogy = function(messageId) {
+            const msgEl = document.getElementById(messageId);
+            if (msgEl) {
+                addMessageToChat('user', `Can you explain this with an analogy?\n"${msgEl.innerText.substring(0, 100)}..."`);
+                showTypingIndicator();
+                getBotResponse(msgEl.innerText, 'analogy');
+            }
+        }
+
+        function showTypingIndicator() {
+            const typingElement = document.createElement('div');
+            typingElement.id = 'typing-indicator';
+            typingElement.className = 'mentor-message flex items-start space-x-3 animated-item';
+            typingElement.innerHTML = `<div class="w-10 h-10 flex-shrink-0"><svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"><path fill="#10b981" d="M48.2,-64.8C62,-51.1,72.4,-34.3,75.4,-16.4C78.4,1.4,74.1,20.4,65.3,37.3C56.5,54.2,43.3,69,27.1,75.8C10.9,82.6,-8.2,81.3,-26.1,74.5C-44.1,67.7,-60.9,55.3,-70.2,38.8C-79.5,22.3,-81.4,1.7,-77.2,-17.1C-73,-35.9,-62.7,-52.9,-48.5,-65.4C-34.3,-77.9,-16.2,-85.9,1.5,-87.3C19.2,-88.7,34.4,-78.5,48.2,-64.8Z" transform="translate(100 100)" /><text x="75" y="115" font-size="80" font-weight="bold" fill="#064e3b">AS</text></svg></div><div class="bg-gray-800 p-4 rounded-xl rounded-tl-none max-w-lg flex items-center space-x-2"><div class="w-2 h-2 bg-teal-500 rounded-full animate-pulse" style="animation-delay: 0s;"></div><div class="w-2 h-2 bg-teal-500 rounded-full animate-pulse" style="animation-delay: 0.2s;"></div><div class="w-2 h-2 bg-teal-500 rounded-full animate-pulse" style="animation-delay: 0.4s;"></div></div>`;
+            chatContainer.appendChild(typingElement);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        function removeTypingIndicator() {
+            const typingIndicator = document.getElementById('typing-indicator');
+            if (typingIndicator) typingIndicator.remove();
+        }
+        
+        async function getBotResponse(userMessage, type) {
+            const systemPrompt = `You are "Azad Sir," a highly experienced, wise, and inspiring virtual mentor for students preparing for India's NEET medical entrance exam. You have over 15 years of teaching experience. **Core Persona:** - **The Wise Mentor:** Be a guide, not just an answer machine. After answering, ask a follow-up question to check understanding. - **Inspirational & Empathetic:** Use encouraging and motivational language. - **Master of Analogy:** Break down complex topics with simple, relatable analogies. - **Strictly Academic:** Your sole focus is NEET (Physics, Chemistry, Biology). Gently steer off-topic questions back to NEET subjects. **Language Interaction Rules (VERY IMPORTANT):** 1. **Detect User Language:** Analyze the user's message to determine the primary language they are using (e.g., English, Hinglish, Hindi, etc.). 2. **Respond in Kind:** Your response MUST be in the same language as the user's query. If they ask in Hinglish, you MUST reply in Hinglish. If they ask in English, reply in English. 3. **Offer English Translation:** For EVERY response that is NOT in pure English, you MUST add the following question at the very end, on a new line: "Do you want this answer in English?"`;
+            let prompt = userMessage;
+            let payloadContent = [{ text: prompt }];
+
+            if (type === 'image_question') {
+                const base64ImageData = userMessage.split(',')[1];
+                payloadContent = [{ text: "You are Azad Sir, a NEET mentor. Please analyze the question in the image and provide a detailed, step-by-step solution suitable for a NEET aspirant. Maintain your encouraging and mentor-like persona and follow all language rules." }, { inlineData: { mimeType: "image/png", data: base64ImageData } }];
+            } else if (type === 'study_plan') {
+                prompt = `Create a study plan for the following topic: ${userMessage}`;
+                payloadContent = [{ text: prompt }];
+            } else if (type === 'analogy') {
+                prompt = `Please provide a simple, relatable analogy for the following concept: "${userMessage}"`;
+                payloadContent = [{ text: prompt }];
+            }
+            
+            try {
+                const botMessage = await callGemini(payloadContent, systemPrompt);
+                removeTypingIndicator();
+                const responseType = type === 'analogy' ? 'analogy_response' : null;
+                addMessageToChat('bot', botMessage || "I'm sorry, I couldn't process that. Could you please rephrase?", responseType);
+            } catch (error) {
+                console.error("Error fetching bot response:", error);
+                removeTypingIndicator();
+                addMessageToChat('bot', "I seem to be facing a technical issue. Please give me a moment and try your question again.");
+            }
+        }
+        
+        // --- Tool Section & FAQ Logic ---
+        const toolsDashboard = document.getElementById('tools-dashboard');
+        const toolInterface = document.getElementById('tool-interface');
+        const toolContents = document.querySelectorAll('.tool-content');
+        const loadingModal = document.getElementById('loading-modal');
+
+        function showLoading(show) {
+            loadingModal.classList.toggle('hidden', !show);
+            loadingModal.classList.toggle('flex', show);
+        }
+
+        function showToolInterface(toolName) {
+            toolsDashboard.classList.add('hidden');
+            toolInterface.classList.remove('hidden');
+            toolContents.forEach(content => {
+                content.classList.toggle('active', content.id === `${toolName}-tool`);
+            });
+            if (toolName === 'qotd' && !document.getElementById('qotd-container').hasChildNodes()) {
+                getQuestionOfTheDay();
+            }
+        }
+
+        toolsDashboard.addEventListener('click', (e) => {
+            const toolCard = e.target.closest('.tool-card');
+            if (toolCard) {
+                showToolInterface(toolCard.dataset.tool);
+            }
+        });
+
+        document.querySelectorAll('.back-to-tools-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                toolInterface.classList.add('hidden');
+                toolsDashboard.classList.remove('hidden');
+            });
+        });
+        
+        document.getElementById('generate-quiz-btn').addEventListener('click', async () => {
+            const subject = document.getElementById('quiz-subject').value;
+            const topic = document.getElementById('quiz-topic').value;
+            if (subject === 'Select Subject' || !topic.trim()) {
+                showCustomAlert("Please select a subject and enter a topic.");
+                return;
+            }
+            showLoading(true);
+            const prompt = `Generate a 5-question multiple-choice quiz on "${topic}" in "${subject}" for NEET. Respond ONLY with JSON array: [{ "question": "...", "options": ["...", "...", "...", "..."], "correctAnswerIndex": X, "explanation": "..." }]`;
+            try {
+                const response = await callGemini([{ text: prompt }]);
+                const quizData = JSON.parse(sanitizeJsonResponse(response));
+                startQuiz(quizData);
+            } catch (error) {
+                console.error("Failed to generate quiz:", error);
+                showCustomAlert("Sorry, I couldn't generate the quiz. Please try a different topic.");
+            } finally {
+                showLoading(false);
+            }
+        });
+
+        function startQuiz(quizData) {
+            const quizSetup = document.getElementById('quiz-setup');
+            const quizContainer = document.getElementById('quiz-container');
+            quizSetup.classList.add('hidden');
+            quizContainer.classList.remove('hidden');
+            quizContainer.innerHTML = '';
+            let currentQuestionIndex = 0;
+            let score = 0;
+
+            function displayQuestion() {
+                if (currentQuestionIndex >= quizData.length) {
+                    displayResults();
+                    return;
+                }
+                const q = quizData[currentQuestionIndex];
+                quizContainer.innerHTML = `<div class="animated-item"><h4 class="text-lg font-semibold mb-2">Question ${currentQuestionIndex + 1}/${quizData.length}</h4><p class="mb-4">${q.question}</p><div id="options-container" class="space-y-3">${q.options.map((option, index) => `<div class="quiz-option p-3 rounded-lg cursor-pointer" data-index="${index}">${option}</div>`).join('')}</div><button id="next-q-btn" class="mt-6 btn btn-primary rounded-lg px-6 py-2 font-bold opacity-50" disabled>Next</button></div>`;
+                const optionsContainer = document.getElementById('options-container');
+                optionsContainer.addEventListener('click', (e) => {
+                    if (e.target.classList.contains('quiz-option') && !optionsContainer.dataset.answered) {
+                        optionsContainer.dataset.answered = "true";
+                        const selectedIndex = parseInt(e.target.dataset.index);
+                        if (selectedIndex === q.correctAnswerIndex) {
+                            score++;
+                            e.target.classList.add('correct');
+                        } else {
+                            e.target.classList.add('incorrect');
+                            optionsContainer.querySelector(`[data-index='${q.correctAnswerIndex}']`).classList.add('correct');
+                        }
+                        const explanationEl = document.createElement('div');
+                        explanationEl.className = 'mt-4 p-3 bg-gray-800 rounded-lg text-sm animated-item';
+                        explanationEl.innerHTML = `<b class="text-teal-400">Explanation:</b> ${q.explanation}`;
+                        quizContainer.querySelector('.animated-item').appendChild(explanationEl);
+                        const nextBtn = document.getElementById('next-q-btn');
+                        nextBtn.disabled = false;
+                        nextBtn.classList.remove('opacity-50');
+                    }
+                });
+                document.getElementById('next-q-btn').addEventListener('click', () => {
+                    currentQuestionIndex++;
+                    displayQuestion();
+                });
+            }
+
+            function displayResults() {
+                 quizContainer.innerHTML = `<div class="animated-item text-center"><h3 class="text-2xl font-bold text-teal-400 mb-4">Quiz Complete!</h3><p class="text-lg mb-6">You scored <span class="font-bold text-white">${score}</span> out of <span class="font-bold text-white">${quizData.length}</span>.</p><button id="retake-quiz-btn" class="btn btn-primary rounded-lg px-6 py-2 font-bold">Create New Quiz</button></div>`;
+                 document.getElementById('retake-quiz-btn').addEventListener('click', () => {
+                     quizContainer.classList.add('hidden');
+                     quizSetup.classList.remove('hidden');
+                 });
+            }
+            displayQuestion();
+        }
+
+        document.getElementById('generate-flashcards-btn').addEventListener('click', async () => {
+            const topic = document.getElementById('flashcard-topic').value;
+            if (!topic.trim()) {
+                showCustomAlert("Please enter a topic to generate flashcards.");
+                return;
+            }
+            showLoading(true);
+            const flashcardDisplay = document.getElementById('flashcard-display');
+            flashcardDisplay.innerHTML = '';
+            const prompt = `Generate 6 key flashcards for the NEET exam topic "${topic}". Respond ONLY with JSON array: [{"term": "...", "definition": "..."}, ...]`;
+            try {
+                const response = await callGemini([{ text: prompt }]);
+                const flashcardData = JSON.parse(sanitizeJsonResponse(response));
+                displayFlashcards(flashcardData);
+            } catch (error) {
+                console.error("Failed to generate flashcards:", error);
+                showCustomAlert("Sorry, I couldn't generate flashcards for that topic.");
+            } finally {
+                showLoading(false);
+            }
+        });
+
+        function displayFlashcards(flashcardData) {
+            const flashcardDisplay = document.getElementById('flashcard-display');
+            flashcardData.forEach((card, index) => {
+                const cardEl = document.createElement('div');
+                cardEl.className = 'flashcard-container animated-item';
+                cardEl.style.animationDelay = `${index * 100}ms`;
+                cardEl.innerHTML = `<div class="flashcard"><div class="flashcard-face flashcard-front font-bold text-center">${card.term}</div><div class="flashcard-face flashcard-back text-sm text-center">${card.definition}</div></div>`;
+                cardEl.addEventListener('click', () => cardEl.querySelector('.flashcard').classList.toggle('is-flipped'));
+                flashcardDisplay.appendChild(cardEl);
+            }); // Fixed: Added the missing closing bracket here
+        }
+        
+        document.getElementById('generate-mnemonic-btn').addEventListener('click', async () => {
+            const list = document.getElementById('mnemonic-input').value;
+            if (!list.trim()) {
+                showCustomAlert("Please enter a list of items to create a mnemonic.");
+                return;
+            }
+            showLoading(true);
+            const display = document.getElementById('mnemonic-display');
+            display.classList.add('hidden');
+            const prompt = `Generate a creative and memorable mnemonic sentence or phrase for the following list of items: "${list}". Make it catchy and relevant for a medical student if possible. Respond ONLY with the generated mnemonic phrase.`;
+            try {
+                const mnemonic = await callGemini([{ text: prompt }]);
+                display.innerHTML = `<p class="font-semibold text-teal-400">Generated Mnemonic:</p><p class="text-white text-lg mt-2">"${mnemonic}"</p>`;
+                display.classList.remove('hidden');
+            } catch (error) {
+                console.error("Failed to generate mnemonic:", error);
+                showCustomAlert("Sorry, I couldn't generate a mnemonic for that list.");
+            } finally {
+                showLoading(false);
+            }
+        });
+
+        const qotdContainer = document.getElementById('qotd-container');
+        async function getQuestionOfTheDay() {
+            qotdContainer.innerHTML = `<p>Loading today's question...</p>`;
+            const prompt = `Generate one challenging, high-yield MC-question for NEET's "Question of the Day". Topic must be random from Physics, Chemistry, or Biology. Respond ONLY with JSON: { "question": "...", "options": ["...", "...", "...", "..."], "correctAnswer": "...", "explanation": "..."}`;
+            try {
+                const response = await callGemini([{ text: prompt }]);
+                const qotdData = JSON.parse(sanitizeJsonResponse(response));
+                displayQOTD(qotdData);
+            } catch (error) {
+                 qotdContainer.innerHTML = `<p>Could not load the question. Please try again later.</p>`;
+            }
+        }
+
+        function displayQOTD(qotdData) {
+            qotdContainer.innerHTML = `<div class="animated-item"><p class="mb-4">${qotdData.question}</p><div class="space-y-2 mb-4">${qotdData.options.map(option => `<div class="p-2 border border-gray-600 rounded-md">${option}</div>`).join('')}</div><button id="reveal-qotd-btn" class="btn btn-secondary rounded-lg px-4 py-2 text-sm font-semibold">Reveal Answer</button><div id="qotd-answer" class="hidden mt-4 p-3 bg-gray-800 rounded-lg text-sm"><p class="font-bold text-teal-400 mb-2">Correct Answer: ${qotdData.correctAnswer}</p><p>${qotdData.explanation}</p></div></div>`;
+            document.getElementById('reveal-qotd-btn').addEventListener('click', (e) => {
+                document.getElementById('qotd-answer').classList.remove('hidden');
+                e.target.style.display = 'none';
+            });
+        }
+        
+        // --- Central Gemini API Caller ---
+        function sanitizeJsonResponse(text) {
+            if (!text) return '{}';
+            return text.replace(/^```json\s*/, '').replace(/```$/, '').trim();
+        }
+
+        async function callGemini(parts, systemPrompt = null, retries = 3, delay = 1000) {
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+            const payload = {
+                contents: [{ parts }],
+                generationConfig: { temperature: 0.6, topK: 1, topP: 1, maxOutputTokens: 4096 }
+            };
+            if(systemPrompt){
+                 payload.systemInstruction = { parts: [{ text: systemPrompt }] };
+            }
+            try {
+                const response = await fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                if (!response.ok) {
+                    if (response.status === 429 && retries > 0) {
+                        await new Promise(resolve => setTimeout(resolve, delay));
+                        return callGemini(parts, systemPrompt, retries - 1, delay * 2);
+                    }
+                    throw new Error(`API request failed with status ${response.status}`);
+                }
+                const result = await response.json();
+                return result.candidates?.[0]?.content?.parts?.[0]?.text;
+            } catch (error) {
+                console.error("Gemini API Error:", error);
+                throw error;
+            }
+        }
+
+        // --- FAQ Accordion ---
+        const faqData = [
+            { question: "Is Azad AI really effective for NEET preparation?", answer: "Yes. Azad AI is specifically trained on the NEET syllabus and methodologies. It's powered by Google's advanced Gemini model and guided by a system persona developed from 15 years of real-world teaching experience." },
+            { question: "Can it solve my doubts from a textbook?", answer: "Absolutely. Use the camera feature to snap a picture of any question. The AI will analyze the image and provide a step-by-step solution, just like a personal tutor would." },
+            { question: "How is this different from other AI chatbots?", answer: "While other chatbots are general-purpose, Azad AI is a specialist. Its entire knowledge base and response generation are fine-tuned for NEET Physics, Chemistry, and Biology. It thinks like a teacher, not just a machine." }
+        ];
+        const faqContainer = document.getElementById('faq-container');
+        faqContainer.innerHTML = faqData.map(item => `
+            <div class="faq-item">
+                <div class="faq-question flex justify-between items-center">
+                    <span class="font-semibold text-white">${item.question}</span>
+                    <svg class="w-5 h-5 text-slate-400 faq-arrow" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                </div>
+                <div class="faq-answer text-sm text-slate-300 pt-1"><p>${item.answer}</p></div>
+            </div>
+        `).join('');
+        faqContainer.addEventListener('click', (e) => {
+            const questionHeader = e.target.closest('.faq-question');
+            if(questionHeader) {
+                const faqItem = questionHeader.parentElement;
+                const wasActive = faqItem.classList.contains('active');
+                faqContainer.querySelectorAll('.faq-item').forEach(item => item.classList.remove('active'));
+                if(!wasActive) { faqItem.classList.add('active'); }
+            }
+        });
+    </script>
+</body>
+</html>
